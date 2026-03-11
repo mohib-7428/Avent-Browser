@@ -1,48 +1,156 @@
-<!DOCTYPE html>
+    <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>My Private Dashboard</title>
-    <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; display: flex; flex-direction: column; height: 100vh; background: #202124; color: white; }
-        #toolbar { background: #35363a; padding: 10px; display: flex; gap: 10px; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.3); }
-        input { flex-grow: 1; padding: 8px; border-radius: 20px; border: none; outline: none; background: #202124; color: white; padding-left: 15px; }
-        button { background: #8ab4f8; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; font-weight: bold; }
-        button:hover { background: #aecbfa; }
-        iframe { flex-grow: 1; border: none; background: white; }
-    </style>
+  <meta charset="UTF-8">
+  <title>Avent Browser</title>
+  
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
+  
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <style>
+    html, body { margin: 0; padding: 0; height: 100vh; overflow: hidden; background-color: #1a1a1a; }
+    .browser-toolbar { background-color: #242424; border-bottom: 1px solid #333; }
+    .custom-input { background-color: #333; color: white; border: none; }
+    .custom-input::placeholder { color: #888; }
+    iframe { width: 100%; height: calc(100vh - 64px); border: none; background: white; }
+  </style>
 </head>
 <body>
 
-<div id="toolbar">
-    <button onclick="home()">Home</button>
-    <input type="text" id="urlInput" placeholder="Enter URL (e.g., wikipedia.org) and press Go">
-    <button onclick="loadPage()">Go</button>
-</div>
+  <div id="root"></div>
 
-<iframe id="browserFrame" src="https://www.bing.com"></iframe>
+  <script type="text/babel">
+    const { useState } = React;
 
-<script>
-    function loadPage() {
-        let url = document.getElementById('urlInput').value;
-        if (!url.startsWith('http')) {
-            url = 'https://' + url;
+    // --- HOME PAGE COMPONENT ---
+    function HomePage({ onNavigate }) {
+      const [searchQuery, setSearchQuery] = useState('');
+
+      const handleSearch = (e) => {
+        if (e.key === 'Enter' && searchQuery.trim() !== '') {
+          onNavigate(`https://duckduckgo.com/?q=${encodeURIComponent(searchQuery)}`);
         }
-        document.getElementById('browserFrame').src = url;
+      };
+
+      const bookmarks = [
+        { name: 'Wikipedia', url: 'wikipedia.org', icon: '📖', color: 'is-link' },
+        { name: 'Calculator', url: 'desmos.com/calculator', icon: '🧮', color: 'is-info' },
+        { name: 'Games', url: 'crazygames.com', icon: '🎮', color: 'is-primary' },
+        { name: 'Archive', url: 'archive.org', icon: '🏛️', color: 'is-dark' }
+      ];
+
+      return (
+        <div className="container mt-6">
+          <div className="has-text-centered mb-6 mt-6">
+            <h1 className="title has-text-white" style={{ fontSize: '4rem' }}>Avent</h1>
+            <div className="field has-addons is-justify-content-center mt-5">
+              <div className="control" style={{ width: '500px' }}>
+                <input 
+                  className="input is-medium is-rounded custom-input" 
+                  type="text" 
+                  placeholder="Search with DuckDuckGo..." 
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onKeyDown={handleSearch}
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="columns is-multiline is-centered mt-6">
+            {bookmarks.map((site, index) => (
+              <div key={index} className="column is-2">
+                <div 
+                  className={`box has-text-centered is-clickable has-background-dark`}
+                  style={{ border: '1px solid #444', transition: 'transform 0.2s' }}
+                  onClick={() => onNavigate(site.url)}
+                  onMouseOver={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
+                  onMouseOut={(e) => e.currentTarget.style.transform = 'scale(1)'}
+                >
+                  <span style={{ fontSize: '2.5rem' }}>{site.icon}</span>
+                  <h2 className="title is-6 has-text-white mt-3">{site.name}</h2>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      );
     }
 
-    function home() {
-        document.getElementById('browserFrame').src = "https://www.bing.com";
-        document.getElementById('urlInput').value = "";
+    // --- MAIN BROWSER COMPONENT ---
+    function App() {
+      const [inputUrl, setInputUrl] = useState('');
+      const [activeSite, setActiveSite] = useState('');
+
+      const handleGo = (urlToLoad) => {
+        if (!urlToLoad) return;
+        
+        let finalUrl = urlToLoad;
+        if (!finalUrl.startsWith('http')) {
+            finalUrl = 'https://' + finalUrl;
+        }
+
+        // Automatic YouTube Fix
+        if (finalUrl.includes("youtube.com/watch?v=")) {
+            finalUrl = finalUrl.replace("watch?v=", "embed/");
+            finalUrl = finalUrl.split('&')[0]; 
+        } else if (finalUrl.includes("youtu.be/")) {
+            finalUrl = finalUrl.replace("youtu.be/", "youtube.com/embed/");
+            finalUrl = finalUrl.split('?')[0]; 
+        }
+
+        setActiveSite(finalUrl);
+        setInputUrl(urlToLoad); 
+      };
+
+      const goHome = () => {
+        setActiveSite('');
+        setInputUrl('');
+      };
+
+      return (
+        <div className="is-flex is-flex-direction-column" style={{ height: '100vh' }}>
+          
+          <div className="p-3 browser-toolbar is-flex is-align-items-center" style={{ gap: '10px' }}>
+            <button className="button is-info is-small" onClick={goHome}>
+              <strong>Home</strong>
+            </button>
+            
+            <input 
+              className="input is-small custom-input is-rounded" 
+              type="text" 
+              placeholder="Enter a URL..." 
+              value={inputUrl}
+              onChange={(e) => setInputUrl(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleGo(inputUrl)}
+            />
+            
+            <button className="button is-primary is-small" onClick={() => handleGo(inputUrl)}>
+              <strong>Go</strong>
+            </button>
+          </div>
+
+          {activeSite === '' ? (
+            <HomePage onNavigate={handleGo} />
+          ) : (
+            <iframe 
+              src={activeSite} 
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+              allowFullScreen
+            ></iframe>
+          )}
+        </div>
+      );
     }
 
-    // Allow pressing "Enter" to search
-    document.getElementById('urlInput').addEventListener("keypress", function(event) {
-        if (event.key === "Enter") {
-            loadPage();
-        }
-    });
-</script>
-
+    // --- RENDER IMMEDIATELY ---
+    const rootElement = document.getElementById('root');
+    const root = ReactDOM.createRoot(rootElement);
+    root.render(<App />);
+  </script>
 </body>
 </html>
