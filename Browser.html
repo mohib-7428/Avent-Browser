@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>My Private Dashboard</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; display: flex; flex-direction: column; height: 100vh; background: #202124; color: white; }
+        #toolbar { background: #35363a; padding: 10px; display: flex; gap: 10px; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.3); }
+        input { flex-grow: 1; padding: 8px; border-radius: 20px; border: none; outline: none; background: #202124; color: white; padding-left: 15px; }
+        button { background: #8ab4f8; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; font-weight: bold; }
+        button:hover { background: #aecbfa; }
+        iframe { flex-grow: 1; border: none; background: white; }
+    </style>
+</head>
+<body>
+
+<div id="toolbar">
+    <button onclick="home()">Home</button>
+    <input type="text" id="urlInput" placeholder="Enter URL (e.g., wikipedia.org) and press Go">
+    <button onclick="loadPage()">Go</button>
+</div>
+
+<iframe id="browserFrame" src="https://www.bing.com"></iframe>
+
+<script>
+    function loadPage() {
+        let url = document.getElementById('urlInput').value;
+        if (!url.startsWith('http')) {
+            url = 'https://' + url;
+        }
+        document.getElementById('browserFrame').src = url;
+    }
+
+    function home() {
+        document.getElementById('browserFrame').src = "https://www.bing.com";
+        document.getElementById('urlInput').value = "";
+    }
+
+    // Allow pressing "Enter" to search
+    document.getElementById('urlInput').addEventListener("keypress", function(event) {
+        if (event.key === "Enter") {
+            loadPage();
+        }
+    });
+</script>
+
+</body>
+</html>
